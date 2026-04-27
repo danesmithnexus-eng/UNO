@@ -11,6 +11,7 @@ function App() {
   const [gameMode, setGameMode] = useState<GameMode>(null)
   const [difficulty, setDifficulty] = useState<Difficulty>(null)
   const [partyCode, setPartyCode] = useState<string | null>(null)
+  const [serverUrl, setServerUrl] = useState<string>('')
   const [userAvatar, setUserAvatar] = useState<string>('👤')
   const [userName, setUserName] = useState<string>('PLAYER')
   const [weather, setWeather] = useState<WeatherEffect>('CHERRY_BLOSSOM')
@@ -20,9 +21,10 @@ function App() {
     setGameMode('AI')
   }
 
-  const startMultiplayer = (code: string) => {
-    console.log('Starting multiplayer with code:', code);
+  const startMultiplayer = (code: string, url?: string) => {
+    console.log('Starting multiplayer with code:', code, 'at URL:', url);
     setPartyCode(code);
+    if (url) setServerUrl(url);
     setGameMode('MULTIPLAYER');
   }
 
@@ -50,6 +52,7 @@ function App() {
           mode={gameMode} 
           difficulty={difficulty} 
           partyCode={partyCode} 
+          serverUrl={serverUrl}
           userAvatar={userAvatar}
           userName={userName}
           onBack={backToMenu} 

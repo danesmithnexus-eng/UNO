@@ -20,14 +20,15 @@ interface GameBoardProps {
   mode: GameMode
   difficulty: Difficulty
   partyCode: string | null
+  serverUrl?: string
   userAvatar: string
   userName: string
   onBack: () => void
   weather: WeatherEffect
 }
 
-export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCode, userAvatar, userName, onBack, weather }) => {
-  console.log('GameBoard rendering:', { mode, partyCode, userAvatar, userName });
+export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCode, serverUrl, userAvatar, userName, onBack, weather }) => {
+  console.log('GameBoard rendering:', { mode, partyCode, serverUrl, userAvatar, userName });
   
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [wildColorMenu, setWildColorMenu] = useState<boolean>(false)
@@ -286,9 +287,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
   // Initialize multiplayer socket
   useEffect(() => {
     if (mode === 'MULTIPLAYER' && partyCode) {
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001'
-      console.log(`Connecting to socket server at ${socketUrl}...`);
-      const socket = io(socketUrl, {
+      // Priority: 1. Manual serverUrl prop, 2. Env variable, 3. localhost
+      let finalSocketUrl = serverUrl || import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
+      
+      // Auto-fix URL if it doesn't start with http
+      if (finalSocketUrl && !finalSocketUrl.startsWith('http')) {
+        finalSocketUrl = `http://${finalSocketUrl}`;
+      }
+
+      console.log(`Connecting to socket server at ${finalSocketUrl}...`);
+      const socket = io(finalSocketUrl, {
         reconnectionAttempts: 5,
         timeout: 10000,
       })
@@ -306,7 +314,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
 
       socket.on('connect_error', (error) => {
         console.error('Socket connection error:', error);
-        setSocketError('Could not connect to multiplayer server. Make sure it is running on port 3001.');
+        setSocketError(`Could not connect to multiplayer server at ${finalSocketUrl}. If hosting locally, use your computer's IP address (e.g. 192.168.1.X:3001) instead of localhost.`);
       })
 
       socket.on('room_update', (data) => {
@@ -352,7 +360,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
     } else if (mode === 'AI') {
       initGame()
     }
-  }, [mode, partyCode, userAvatar, initGame, handleRemoteAction])
+  }, [mode, partyCode, serverUrl, userAvatar, initGame, handleRemoteAction])
 
   const playCard = (playerIndex: number, card: CardType, newColor?: CardColor) => {
     if (!gameState) return

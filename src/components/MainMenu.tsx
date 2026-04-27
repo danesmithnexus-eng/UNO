@@ -12,7 +12,7 @@ function cn(...inputs: ClassValue[]) {
 
 interface MainMenuProps {
   onStartAI: (difficulty: Difficulty) => void
-  onStartMultiplayer: (code: string) => void
+  onStartMultiplayer: (code: string, serverUrl?: string) => void
   userAvatar: string
   setUserAvatar: (avatar: string) => void
   userName: string
@@ -35,6 +35,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 }) => {
   const [view, setView] = useState<'MAIN' | 'AI_SELECT' | 'MULTIPLAYER_SELECT' | 'CHARACTER_EDIT'>('MAIN')
   const [inputCode, setInputCode] = useState('')
+  const [customServerUrl, setCustomServerUrl] = useState('')
 
   const generateCode = () => {
     try {
@@ -44,17 +45,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         result += characters.charAt(Math.floor(Math.random() * characters.length));
       }
       console.log('Generated code:', result);
-      onStartMultiplayer(result);
+      onStartMultiplayer(result, customServerUrl);
     } catch (error) {
       console.error('Error generating code:', error);
       // Fallback code just in case
-      onStartMultiplayer('PIXEL1');
+      onStartMultiplayer('PIXEL1', customServerUrl);
     }
   }
 
   const joinGame = () => {
     if (inputCode.length === 6) {
-      onStartMultiplayer(inputCode.toUpperCase())
+      onStartMultiplayer(inputCode.toUpperCase(), customServerUrl)
     }
   }
 
@@ -190,6 +191,19 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       {view === 'MULTIPLAYER_SELECT' && (
           <div className="flex flex-col gap-4 w-full">
             <h2 className="text-lg text-center mb-2">MULTIPLAYER</h2>
+            
+            <div className="flex flex-col gap-2 mb-4 p-3 bg-black/40 pixel-border-sm">
+              <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Server URL (Optional)</label>
+              <input 
+                type="text" 
+                placeholder="e.g. 192.168.1.5:3001" 
+                value={customServerUrl}
+                onChange={(e) => setCustomServerUrl(e.target.value)}
+                className="bg-black/40 p-2 pixel-border-sm text-blue-400 text-xs font-bold focus:outline-none"
+              />
+              <p className="text-[8px] text-zinc-500 italic">Leave empty for default server</p>
+            </div>
+
             <button onClick={generateCode} className="pixel-button bg-blue-600 hover:bg-blue-500 text-sm">CREATE PARTY</button>
             <div className="flex flex-col gap-2 mt-4">
               <input 
