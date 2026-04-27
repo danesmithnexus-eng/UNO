@@ -1,0 +1,186 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Press Start 2P", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #1a1a1a;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+@layer utilities {
+  .pixel-border {
+    box-shadow: 
+      0 -4px 0 0 black,
+      0 4px 0 0 black,
+      -4px 0 0 0 black,
+      4px 0 0 0 black;
+  }
+
+  .pixel-border-thick {
+    box-shadow: 
+      0 -8px 0 0 black,
+      0 8px 0 0 black,
+      -8px 0 0 0 black,
+      8px 0 0 0 black;
+  }
+  
+  .pixel-border-sm {
+    box-shadow: 
+      0 -2px 0 0 black,
+      0 2px 0 0 black,
+      -2px 0 0 0 black,
+      2px 0 0 0 black;
+  }
+
+  .pixel-border-32 {
+    box-shadow: 
+      0 -4px 0 0 rgba(0,0,0,0.8),
+      0 4px 0 0 rgba(0,0,0,0.8),
+      -4px 0 0 0 rgba(0,0,0,0.8),
+      4px 0 0 0 rgba(0,0,0,0.8),
+      inset 4px 4px 0 0 rgba(255,255,255,0.1),
+      inset -4px -4px 0 0 rgba(0,0,0,0.2);
+  }
+
+  .pixel-gradient-32 {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.1) 100%);
+  }
+
+  .perspective-table {
+    transform: perspective(1200px) rotateX(25deg);
+    background-color: #9d6835;
+    background-image: 
+      linear-gradient(90deg, #3d2511 4px, transparent 4px),
+      linear-gradient(rgba(0,0,0,0.15) 2px, transparent 2px),
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 70%);
+    background-size: 80px 100%, 100% 40px, 100% 100%;
+    box-shadow: 
+      0 20px 0 #5d3a1a,
+      0 30px 60px rgba(0,0,0,0.6);
+    border: 8px solid #3d2511;
+    position: relative;
+    image-rendering: pixelated;
+  }
+
+  .perspective-table::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 18px, rgba(0,0,0,0.05) 18px, rgba(0,0,0,0.05) 20px),
+      repeating-linear-gradient(90deg, transparent, transparent 78px, rgba(0,0,0,0.1) 78px, rgba(0,0,0,0.1) 80px);
+    pointer-events: none;
+  }
+
+  .pixel-shadow {
+    filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.4));
+  }
+
+  .pixel-glass {
+    width: 32px;
+    height: 48px;
+    background: rgba(173, 216, 230, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-top: none;
+    position: relative;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+  }
+
+  .pixel-glass::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 2px;
+    right: 2px;
+    top: 10px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .pixel-glass-water {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    right: 2px;
+    height: 70%;
+    background: #4facfe;
+    opacity: 0.6;
+  }
+
+  .comic-bubble {
+    position: relative;
+    background: #fff;
+    border: 4px solid #000;
+  }
+  
+  .comic-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 20px;
+    border-width: 12px 12px 0;
+    border-style: solid;
+    border-color: #000 transparent;
+  }
+
+  .fanned-hand {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 200px;
+    padding-bottom: 20px;
+  }
+
+  .fanned-card {
+    transition: transform 0.2s ease, margin 0.2s ease;
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+  }
+
+  .fanned-card:hover {
+    transform: translateY(-40px) scale(1.1) rotate(0deg) !important;
+    z-index: 50 !important;
+  }
+}
+
+
+.pixel-button {
+  @apply px-4 py-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white transition-colors duration-100;
+  border-bottom: 4px solid rgba(0,0,0,0.3);
+  border-right: 4px solid rgba(0,0,0,0.3);
+}
+
+.pixel-text {
+  text-shadow: 2px 2px 0px #000;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border: 2px solid #1a1a1a;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
