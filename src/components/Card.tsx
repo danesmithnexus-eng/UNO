@@ -37,7 +37,7 @@ export const Card: React.FC<CardProps> = ({ card, onClick, disabled, isBack, cla
     }
   }
 
-  const baseClasses = "w-12 h-18 sm:w-16 sm:h-24 bg-white rounded-sm pixel-border-32 flex flex-col items-center justify-center p-0.5 sm:p-1 cursor-pointer select-none transition-opacity relative overflow-hidden"
+  const baseClasses = "w-16 h-24 sm:w-20 sm:h-32 bg-white rounded-sm pixel-border-32 flex flex-col items-center justify-center p-1 sm:p-1.5 cursor-pointer select-none transition-opacity relative overflow-hidden"
 
   if (isBack) {
     return (
@@ -46,7 +46,7 @@ export const Card: React.FC<CardProps> = ({ card, onClick, disabled, isBack, cla
         whileTap={!disabled ? { scale: 0.95 } : {}}
         onClick={!disabled ? onClick : undefined}
         className={cn(
-          "w-12 h-18 sm:w-16 sm:h-24 bg-white pixel-border-32 rounded-sm flex items-center justify-center p-0.5 sm:p-1 cursor-pointer transition-opacity group", 
+          "w-16 h-24 sm:w-20 sm:h-32 bg-white pixel-border-32 rounded-sm flex items-center justify-center p-1 sm:p-1.5 cursor-pointer transition-opacity group", 
           disabled && "opacity-50 cursor-not-allowed",
           className
         )}
@@ -56,10 +56,10 @@ export const Card: React.FC<CardProps> = ({ card, onClick, disabled, isBack, cla
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/20 to-transparent pointer-events-none z-10" />
           
           {/* Slanted design background */}
-          <div className="absolute inset-0 bg-[#e53d3d] transform -skew-x-[25deg] translate-x-6 sm:translate-x-8" />
+          <div className="absolute inset-0 bg-[#e53d3d] transform -skew-x-[25deg] translate-x-8 sm:translate-x-10" />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-[85%] h-[45%] bg-white rounded-[50%] flex items-center justify-center transform rotate-[-20deg] pixel-border-sm shadow-[inset_0_4px_0_rgba(0,0,0,0.1)]">
-              <span className="text-[#e53d3d] text-[10px] sm:text-[14px] font-black italic transform rotate-[20deg] pixel-text tracking-tighter drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]">UNO</span>
+              <span className="text-[#e53d3d] text-[12px] sm:text-[16px] font-black italic transform rotate-[20deg] pixel-text tracking-tighter drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]">UNO</span>
             </div>
           </div>
         </div>
@@ -91,10 +91,10 @@ export const Card: React.FC<CardProps> = ({ card, onClick, disabled, isBack, cla
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/30 to-transparent pointer-events-none z-10" />
         
         {/* Corner Values */}
-        <div className="absolute top-0.5 left-0.5 text-[8px] sm:text-[10px] font-black text-white pixel-text leading-none z-20">
+        <div className="absolute top-1 left-1 text-[10px] sm:text-[12px] font-black text-white pixel-text leading-none z-20">
           {card.value === 'WILD' ? '' : card.value === 'WILD_DRAW4' ? '+4' : card.value === 'SKIP' ? '⊘' : card.value === 'REVERSE' ? '⇄' : card.value === 'DRAW2' ? '+2' : card.value}
         </div>
-        <div className="absolute bottom-0.5 right-0.5 text-[8px] sm:text-[10px] font-black text-white pixel-text leading-none z-20 transform rotate-180">
+        <div className="absolute bottom-1 right-1 text-[10px] sm:text-[12px] font-black text-white pixel-text leading-none z-20 transform rotate-180">
           {card.value === 'WILD' ? '' : card.value === 'WILD_DRAW4' ? '+4' : card.value === 'SKIP' ? '⊘' : card.value === 'REVERSE' ? '⇄' : card.value === 'DRAW2' ? '+2' : card.value}
         </div>
 
@@ -105,10 +105,10 @@ export const Card: React.FC<CardProps> = ({ card, onClick, disabled, isBack, cla
         )}>
           <div className="transform rotate-[25deg] flex items-center justify-center">
             {card.value === 'REVERSE' ? (
-              <span className={cn("text-xs sm:text-xl font-black italic drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]", isWild ? "text-white" : getTextColorClass(card.color))}>⇄</span>
+              <span className={cn("text-sm sm:text-2xl font-black italic drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]", isWild ? "text-white" : getTextColorClass(card.color))}>⇄</span>
             ) : (
               <span className={cn(
-                "text-lg sm:text-3xl font-black pixel-text italic tracking-tighter drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]",
+                "text-xl sm:text-4xl font-black pixel-text italic tracking-tighter drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]",
                 isWild ? "text-white" : getTextColorClass(card.color)
               )}>
                 {card.value === 'WILD' ? 'W' : card.value === 'WILD_DRAW4' ? '+4' : card.value === 'SKIP' ? '⊘' : card.value === 'DRAW2' ? '+2' : card.value}

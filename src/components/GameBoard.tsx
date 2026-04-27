@@ -679,19 +679,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-50">
         <button 
           onClick={onBack}
-          className="pixel-button bg-zinc-800 hover:bg-zinc-700 flex items-center gap-2 text-[10px] sm:text-xs pixel-border-32"
+          className="pixel-button bg-zinc-800 hover:bg-zinc-700 flex items-center gap-2 text-[12px] sm:text-sm pixel-border-32"
         >
-          <ArrowLeft size={14} /> LEAVE
+          <ArrowLeft size={16} /> LEAVE
         </button>
         
         <div className="flex flex-col items-end gap-2">
           {mode === 'MULTIPLAYER' && (
-            <div className="bg-black/60 px-3 py-1 pixel-border-32 text-[8px] sm:text-[10px]">
+            <div className="bg-black/60 px-3 py-1 pixel-border-32 text-[10px] sm:text-xs">
               <span className="text-zinc-400">ROOM:</span> <span className="text-yellow-400 font-bold tracking-widest">{partyCode}</span>
             </div>
           )}
           {gameState && (
-            <div className="text-white font-black text-[8px] sm:text-[10px] pixel-text uppercase bg-black/40 px-2 py-1 pixel-border-32">
+            <div className="text-white font-black text-[10px] sm:text-xs pixel-text uppercase bg-black/40 px-2 py-1 pixel-border-32">
               NEXT PLAYER: <span className="text-yellow-400">
                 {gameState.players[getNextPlayerIndex(gameState.currentPlayerIndex, gameState.direction, gameState.players.length)].name}
               </span>
@@ -703,7 +703,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       {/* Current Player Badge (Bottom Right) */}
       <div className="absolute bottom-4 right-4 z-50">
         <div className="flex flex-col items-start bg-black/40 p-2 pixel-border-32">
-          <span className="text-white font-black text-[10px] sm:text-xs pixel-text uppercase">{userName}</span>
+          <span className="text-white font-black text-[12px] sm:text-sm pixel-text uppercase">{userName}</span>
           <div className="flex gap-1 mt-1">
             <motion.div 
               animate={gameState.currentPlayerIndex === 0 ? { 
@@ -723,14 +723,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       {/* The Table */}
       <div className="relative w-[95%] max-w-4xl aspect-[16/9] perspective-table flex items-center justify-center pixel-shadow">
         {/* Game Area on Table */}
-        <div className="relative w-full h-full flex items-center justify-center gap-12 sm:gap-20">
+        <div className="relative w-full h-full flex items-center justify-center gap-16 sm:gap-24">
           {/* Draw Pile */}
           <div className="relative flex flex-col items-center gap-2">
             <div className="relative group">
               {/* Stack effect */}
-              <div className="absolute top-1.5 left-1.5 w-12 h-18 sm:w-16 sm:h-24 bg-zinc-800 pixel-border-sm" />
-              <div className="absolute top-1 left-1 w-12 h-18 sm:w-16 sm:h-24 bg-zinc-700 pixel-border-sm" />
-              <div className="absolute top-0.5 left-0.5 w-12 h-18 sm:w-16 sm:h-24 bg-zinc-600 pixel-border-sm" />
+              <div className="absolute top-1.5 left-1.5 w-16 h-24 sm:w-20 sm:h-32 bg-zinc-800 pixel-border-sm" />
+              <div className="absolute top-1 left-1 w-16 h-24 sm:w-20 sm:h-32 bg-zinc-700 pixel-border-sm" />
+              <div className="absolute top-0.5 left-0.5 w-16 h-24 sm:w-20 sm:h-32 bg-zinc-600 pixel-border-sm" />
               <Card 
                 isBack 
                 onClick={() => gameState?.status === 'PLAYING' && drawCard(0)} 
@@ -766,7 +766,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className={cn(
-                      "px-3 py-1 pixel-border-sm text-[8px] sm:text-[10px] font-black italic uppercase shadow-[0_0_15px_rgba(255,255,255,0.2)]",
+                      "px-3 py-1 pixel-border-sm text-[10px] sm:text-xs font-black italic uppercase shadow-[0_0_15px_rgba(255,255,255,0.2)]",
                       gameState.currentColor === 'RED' ? "bg-red-600 text-white" :
                       gameState.currentColor === 'BLUE' ? "bg-blue-600 text-white" :
                       gameState.currentColor === 'GREEN' ? "bg-green-600 text-white" :
@@ -776,7 +776,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
                     {gameState.currentColor}
                   </motion.div>
                 )}
-                <div className="text-white font-black italic text-xs sm:text-xl pixel-text tracking-tighter whitespace-nowrap">
+                <div className="text-white font-black italic text-sm sm:text-xl pixel-text tracking-tighter whitespace-nowrap">
                   DISCARD
                 </div>
               </div>
@@ -799,13 +799,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
               "flex flex-col items-center gap-2",
               idx === 1 ? "flex-col" : idx === 2 ? "flex-col" : "flex-col"
             )}>
-              <div className="relative flex -space-x-6 sm:-space-x-8">
+              <div className="relative flex -space-x-8 sm:-space-x-10">
                 {Array.from({ length: Math.min(player.hand.length, 5) }).map((_, i) => (
                   <div key={i} className={cn(
                     "transform",
                     idx === 0 ? "rotate-180" : idx === 1 ? "-rotate-90" : "rotate-90"
                   )}>
-                    <Card isBack className="w-8 h-12 sm:w-10 sm:h-16 pixel-shadow" />
+                    <Card isBack className="w-10 h-14 sm:w-14 sm:h-20 pixel-shadow" />
                   </div>
                 ))}
                 {player.hand.length > 5 && (
@@ -815,7 +815,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
                 )}
               </div>
               <div className="flex flex-col items-center gap-1">
-                <div className="text-white font-black text-[8px] sm:text-[10px] pixel-text uppercase">
+                <div className="text-white font-black text-[10px] sm:text-xs pixel-text uppercase">
                   {player.name}
                 </div>
                 <div className="flex gap-1">
@@ -850,11 +850,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
           </motion.div>
         )}
 
-        <div className="flex flex-wrap justify-center items-end gap-[-20px] sm:gap-[-30px] px-4 pointer-events-auto max-w-5xl">
+        <div className="flex flex-wrap justify-center items-end px-4 pointer-events-auto max-w-5xl">
           {gameState?.players[0].hand.map((card, idx) => (
             <div 
               key={`${card.color}-${card.value}-${idx}`}
-              className="transform hover:-translate-y-8 transition-transform duration-200 -ml-6 sm:-ml-10 first:ml-0"
+              className="transform hover:-translate-y-8 transition-transform duration-200 -ml-8 sm:-ml-12 first:ml-0"
               style={{ 
                 zIndex: idx + 10,
                 rotate: `${(idx - (gameState.players[0].hand.length - 1) / 2) * 2}deg`
