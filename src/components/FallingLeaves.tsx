@@ -14,7 +14,7 @@ interface Leaf {
 const LEAF_COLORS = ['#d97706', '#92400e', '#b45309', '#78350f', '#f59e0b'];
 
 export const FallingLeaves: React.FC = () => {
-  const leaves = useMemo(() => {
+  const leaves = useMemo<Leaf[]>(() => {
     return Array.from({ length: 20 }).map((_, i) => ({
       id: i,
       x: `${Math.random() * 100}%`,

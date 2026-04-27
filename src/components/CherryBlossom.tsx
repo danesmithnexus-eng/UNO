@@ -11,7 +11,7 @@ interface Petal {
 }
 
 export const CherryBlossom: React.FC = () => {
-  const petals = useMemo(() => {
+  const petals = useMemo<Petal[]>(() => {
     return Array.from({ length: 20 }).map((_, i) => ({
       id: i,
       x: `${Math.random() * 100}%`,
