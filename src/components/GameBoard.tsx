@@ -286,8 +286,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
   // Initialize multiplayer socket
   useEffect(() => {
     if (mode === 'MULTIPLAYER' && partyCode) {
-      console.log('Connecting to socket server at http://localhost:3001...');
-      const socket = io('http://localhost:3001', {
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001'
+      console.log(`Connecting to socket server at ${socketUrl}...`);
+      const socket = io(socketUrl, {
         reconnectionAttempts: 5,
         timeout: 10000,
       })
