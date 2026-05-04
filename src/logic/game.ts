@@ -93,7 +93,7 @@ export const calculateMove = (
     const targetIndex = getNextPlayerIndex(currentState.currentPlayerIndex, nextDirection, currentState.players.length)
     const targetPlayer = updatedPlayers[targetIndex]
     const drawnCards = nextDeck.splice(0, cardsToDraw)
-    updatedPlayers[targetIndex] = { ...targetPlayer, hand: [...targetPlayer.hand, ...drawnCards] }
+    updatedPlayers[targetIndex] = { ...targetPlayer, hand: [...targetPlayer.hand, ...drawnCards], saidUno: false }
     skipNext = true
   }
 

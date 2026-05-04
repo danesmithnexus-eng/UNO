@@ -14,6 +14,7 @@ export interface Player {
   isAI: boolean
   avatar: string
   isHost?: boolean
+  saidUno?: boolean
 }
 
 export interface GameState {

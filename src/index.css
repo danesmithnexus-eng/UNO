@@ -78,7 +78,21 @@ body {
     image-rendering: pixelated;
   }
 
-  .perspective-table::before {
+  .chessboard-table {
+    transform: perspective(1200px) rotateX(25deg);
+    background-color: #f0d9b5;
+    background-image: 
+      conic-gradient(#b58863 90deg, transparent 90deg 180deg, #b58863 180deg 270deg, transparent 270deg);
+    background-size: 100px 100px;
+    box-shadow: 
+      0 20px 0 #5d3a1a,
+      0 30px 60px rgba(0,0,0,0.6);
+    border: 12px solid #3d2511;
+    position: relative;
+    image-rendering: pixelated;
+  }
+
+  .perspective-table::before, .chessboard-table::before {
     content: '';
     position: absolute;
     inset: 0;

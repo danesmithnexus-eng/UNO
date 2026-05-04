@@ -83,6 +83,16 @@ io.on('connection', (socket) => {
     socket.to(roomCode).emit('game_action', { action, data, senderId: socket.id });
   });
 
+  socket.on('chat_message', ({ roomCode, message, senderName }) => {
+    console.log(`[CHAT] Message in ${roomCode} from ${senderName}: ${message}`);
+    io.in(roomCode).emit('chat_message', {
+      message,
+      senderName,
+      senderId: socket.id,
+      timestamp: Date.now()
+    });
+  });
+
   socket.on('disconnect', () => {
     console.log('user disconnected:', socket.id);
     // Handle player removal from rooms

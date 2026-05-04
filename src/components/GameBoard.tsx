@@ -6,8 +6,11 @@ import { Card } from './Card'
 import { SpecialCardEffect } from './SpecialCardEffect'
 import { CherryBlossom } from './CherryBlossom'
 import { FallingLeaves } from './FallingLeaves'
+import { Snowfall } from './Snowfall'
+import { FireEffect } from './FireEffect'
+import { FishboneEffect } from './FishboneEffect'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, RefreshCw, Trophy } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Trophy, MessageCircle, Send, X } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -33,12 +36,131 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [wildColorMenu, setWildColorMenu] = useState<boolean>(false)
   const [pendingWildCard, setPendingWildCard] = useState<CardType | null>(null)
-  const [hasSaidUno, setHasSaidUno] = useState<boolean>(false)
   const [specialEffect, setSpecialEffect] = useState<string | null>(null)
   const [showDramaticAction, setShowDramaticAction] = useState<{card: CardType, player: Player, chosenColor?: CardColor} | null>(null)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatMessages, setChatMessages] = useState<{message: string, senderName: string, senderId: string, timestamp: number}[]>([])
+  const [newMessage, setNewMessage] = useState('')
+  const [isChessboard, setIsChessboard] = useState(false)
+  const [isBurning, setIsBurning] = useState(false)
+  const [isFrosty, setIsFrosty] = useState(false)
+  const [isFishy, setIsFishy] = useState(false)
+  const [, setTypedBuffer] = useState('')
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  const triggerEffect = useCallback((effect: string) => {
+    setSpecialEffect(effect)
+    setTimeout(() => setSpecialEffect(null), 2000)
+  }, [])
+
+  const handleCheatCode = useCallback((code: string, isRemote: boolean = false) => {
+    const trigger = code.toLowerCase().trim();
+    let activated = false;
+
+    if (trigger.includes('burnitall')) {
+      setIsBurning(true);
+      triggerEffect('BURN IT ALL!');
+      setTimeout(() => setIsBurning(false), 10000);
+      activated = true;
+    } else if (trigger.includes('checkers')) {
+      setIsChessboard(prev => {
+        const next = !prev;
+        triggerEffect(next ? 'CHESSBOARD!' : 'WOODEN TABLE');
+        return next;
+      });
+      activated = true;
+    } else if (trigger.includes('frosty')) {
+      setIsFrosty(prev => {
+        const next = !prev;
+        triggerEffect(next ? 'STAY FROSTY!' : 'WARM UP');
+        return next;
+      });
+      activated = true;
+    } else if (trigger.includes('fishbones')) {
+      setIsFishy(true);
+      triggerEffect('FISHY BUSINESS!');
+      setTimeout(() => setIsFishy(false), 8000); // Swims for 8 seconds
+      activated = true;
+    }
+
+    if (activated && !isRemote && mode === 'MULTIPLAYER' && partyCode) {
+      socketRef.current?.emit('game_action', {
+        roomCode: partyCode,
+        action: 'CHEAT_CODE',
+        data: { code: trigger }
+      });
+    }
+
+    return activated;
+  }, [triggerEffect, mode, partyCode]);
+
+  // Global Cheat Code Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in chat or other input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const char = e.key.toLowerCase();
+      if (char.length === 1 && /[a-z]/.test(char)) {
+        setTypedBuffer(prev => {
+          const newBuffer = (prev + char).slice(-20); // Keep last 20 chars
+          
+          if (newBuffer.includes('burnitall')) {
+            handleCheatCode('burnitall');
+            return '';
+          }
+          if (newBuffer.includes('checkers')) {
+            handleCheatCode('checkers');
+            return '';
+          }
+          if (newBuffer.includes('frosty')) {
+            handleCheatCode('frosty');
+            return '';
+          }
+          if (newBuffer.includes('fishbones')) {
+            handleCheatCode('fishbones');
+            return '';
+          }
+          
+          return newBuffer;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleCheatCode]);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    if (chatOpen) {
+      scrollToBottom()
+    }
+  }, [chatMessages, chatOpen])
+
+  const sendChatMessage = () => {
+    if (!newMessage.trim() || !partyCode) return
+    
+    socketRef.current?.emit('chat_message', {
+      roomCode: partyCode,
+      message: newMessage,
+      senderName: userName
+    })
+    setNewMessage('')
+  }
 
   const sayUno = () => {
-    setHasSaidUno(true)
+    setGameState(prev => {
+      if (!prev) return null
+      const updatedPlayers = [...prev.players]
+      updatedPlayers[0] = { ...updatedPlayers[0], saidUno: true }
+      return { ...prev, players: updatedPlayers }
+    })
     triggerEffect('UNO!')
     
     if (mode === 'MULTIPLAYER') {
@@ -76,14 +198,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
     }
   }, [myId, hostId, isHost, connectedPlayers, mode]);
 
-  const triggerEffect = useCallback((effect: string) => {
-    setSpecialEffect(effect)
-    setTimeout(() => setSpecialEffect(null), 2000)
-  }, [])
-
   const initGame = useCallback((multiplayerPlayers?: any[], initialState?: any) => {
     console.log('initGame called:', { mode, hasInitialState: !!initialState, playersCount: multiplayerPlayers?.length });
-    setHasSaidUno(false)
+    
+    // Reset saidUno status in gameState when initializing
+    setGameState(prev => {
+      if (!prev) return null
+      return {
+        ...prev,
+        players: prev.players.map(p => ({ ...p, saidUno: false }))
+      }
+    })
 
     // Case 1: Received state from host (for non-host players)
     if (mode === 'MULTIPLAYER' && initialState) {
@@ -127,13 +252,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
         name: p.name || 'Player',
         hand: [],
         isAI: false,
-        avatar: p.avatar || '👤'
+        avatar: p.avatar || '👤',
+        saidUno: false
       }))
     } else {
       players = [
-        { id: 'player', name: 'YOU', hand: [], isAI: false, avatar: userAvatar },
-        { id: 'ai1', name: `AI ${difficulty || 'EASY'} 1`, hand: [], isAI: true, avatar: '🤖' },
-        { id: 'ai2', name: `AI ${difficulty || 'EASY'} 2`, hand: [], isAI: true, avatar: '👾' },
+        { id: 'player', name: 'YOU', hand: [], isAI: false, avatar: userAvatar, saidUno: false },
+        { id: 'ai1', name: `AI ${difficulty || 'EASY'} 1`, hand: [], isAI: true, avatar: '🤖', saidUno: false },
+        { id: 'ai2', name: `AI ${difficulty || 'EASY'} 2`, hand: [], isAI: true, avatar: '👾', saidUno: false },
       ]
     }
 
@@ -194,6 +320,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       }
       return
     }
+
+    if (action === 'CHEAT_CODE') {
+      const { code } = data
+      handleCheatCode(code, true)
+      return
+    }
+
     setGameState(prev => {
       if (!prev) return null
       const updatedPlayers = [...prev.players]
@@ -212,14 +345,31 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
         const move = calculateMove(card, playerIndex, prev, newColor)
         const isGameOver = move.nextPlayers[playerIndex].hand.length === 0
 
+        let finalPlayers = move.nextPlayers
+        let finalDeck = move.nextDeck
+
+        // Punishment logic: if player had 2 cards and didn't say UNO before playing
+        if (player.hand.length === 2 && !player.saidUno) {
+          triggerEffect(`${player.name} FORGOT UNO! +2`)
+          const penaltyCards = finalDeck.splice(0, 2)
+          finalPlayers = finalPlayers.map((p, idx) => 
+            idx === playerIndex ? { ...p, hand: [...p.hand, ...penaltyCards], saidUno: false } : p
+          )
+        } else {
+          // Reset saidUno if they don't have exactly 1 card left
+          finalPlayers = finalPlayers.map((p, idx) => 
+            idx === playerIndex ? { ...p, saidUno: p.hand.length === 1 && p.saidUno } : p
+          )
+        }
+
         if (['SKIP', 'REVERSE', 'DRAW2', 'WILD_DRAW4'].includes(card.value)) {
           triggerEffect(`${card.value}!`)
         }
 
         return {
           ...prev,
-          players: move.nextPlayers,
-          deck: move.nextDeck,
+          players: finalPlayers,
+          deck: finalDeck,
           discardPile: [...prev.discardPile, card],
           currentPlayerIndex: move.nextIndex,
           direction: move.nextDirection,
@@ -250,7 +400,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
         }
 
         if (drawnCard) {
-          updatedPlayers[playerIndex] = { ...player, hand: [...player.hand, drawnCard] }
+          updatedPlayers[playerIndex] = { ...player, hand: [...player.hand, drawnCard], saidUno: false }
         }
         
         const nextIndex = getNextPlayerIndex(prev.currentPlayerIndex, prev.direction, prev.players.length)
@@ -273,16 +423,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
 
       if (action === 'SAY_UNO') {
         const { playerId } = data
-        const player = updatedPlayers.find(p => p.id === playerId)
-        if (player) {
-          triggerEffect(`${player.name}: UNO!`)
+        const playerIndex = updatedPlayers.findIndex(p => p.id === playerId)
+        if (playerIndex !== -1) {
+          updatedPlayers[playerIndex] = { ...updatedPlayers[playerIndex], saidUno: true }
+          triggerEffect(`${updatedPlayers[playerIndex].name}: UNO!`)
         }
-        return prev
+        return {
+          ...prev,
+          players: updatedPlayers
+        }
       }
 
       return prev
     })
-  }, [triggerEffect])
+  }, [triggerEffect, handleCheatCode])
 
   // Initialize multiplayer socket
   useEffect(() => {
@@ -346,6 +500,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
         handleRemoteAction(action, data)
       })
 
+      socket.on('chat_message', (data) => {
+        setChatMessages(prev => [...prev, data])
+      })
+
       return () => {
         console.log('DISCONNECTING SOCKET');
         socket.off('connect');
@@ -378,6 +536,23 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       const move = calculateMove(card, playerIndex, gameState, newColor)
       const isGameOver = move.nextPlayers[playerIndex].hand.length === 0
 
+      let finalPlayers = move.nextPlayers
+      let finalDeck = move.nextDeck
+
+      // Punishment logic: if player had 2 cards and didn't say UNO before playing
+      if (player.hand.length === 2 && !player.saidUno) {
+        triggerEffect(`${player.name} FORGOT UNO! +2`)
+        const drawnCards = finalDeck.splice(0, 2)
+        finalPlayers = finalPlayers.map((p, idx) => 
+          idx === playerIndex ? { ...p, hand: [...p.hand, ...drawnCards], saidUno: false } : p
+        )
+      } else {
+        // Reset saidUno if they don't have exactly 1 card left
+        finalPlayers = finalPlayers.map((p, idx) => 
+          idx === playerIndex ? { ...p, saidUno: p.hand.length === 1 && p.saidUno } : p
+        )
+      }
+
       // Special Card Effects - Only trigger if it's the current move we're processing
       if (['SKIP', 'REVERSE', 'DRAW2', 'WILD_DRAW4', 'WILD'].includes(card.value)) {
         setShowDramaticAction({ card, player, chosenColor: move.nextColor })
@@ -392,8 +567,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
 
         return {
           ...prev,
-          players: move.nextPlayers,
-          deck: move.nextDeck,
+          players: finalPlayers,
+          deck: finalDeck,
           discardPile: [...prev.discardPile, card],
           currentPlayerIndex: move.nextIndex,
           direction: move.nextDirection,
@@ -453,7 +628,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       }
 
       if (drawnCard) {
-        updatedPlayers[playerIndex] = { ...player, hand: [...player.hand, drawnCard] }
+        updatedPlayers[playerIndex] = { ...player, hand: [...player.hand, drawnCard], saidUno: false }
         
         // Broadcast the draw in multiplayer
         if (mode === 'MULTIPLAYER' && playerIndex === 0) { // Only if it's the local player
@@ -509,6 +684,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
               cardToPlay = drawCards[0]
             } else if (normalCards.length > 0) {
               cardToPlay = normalCards[0]
+            }
+          }
+
+          // AI says UNO if they will have 1 card left
+          if (aiPlayer.hand.length === 2) {
+            // Harder AI is more likely to remember
+            const chance = difficulty === 'HARD' ? 0.95 : difficulty === 'MEDIUM' ? 0.8 : 0.6
+            if (Math.random() < chance) {
+              setGameState(prev => {
+                if (!prev) return null
+                const updatedPlayers = prev.players.map(p => 
+                  p.id === aiPlayer.id ? { ...p, saidUno: true } : p
+                )
+                return { ...prev, players: updatedPlayers }
+              })
+              triggerEffect(`${aiPlayer.name}: UNO!`)
             }
           }
 
@@ -670,6 +861,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       {/* Weather Effects */}
       {weather === 'CHERRY_BLOSSOM' && <CherryBlossom />}
       {weather === 'FALL_LEAVES' && <FallingLeaves />}
+      {isFrosty && <Snowfall />}
+      {isBurning && <FireEffect />}
+      {isFishy && <FishboneEffect />}
 
       {/* Background/Ambient Lighting */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.05)_0%,transparent_100%)] pointer-events-none" />
@@ -697,6 +891,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
               </span>
             </div>
           )}
+          {mode === 'MULTIPLAYER' && (
+            <button 
+              onClick={() => setChatOpen(!chatOpen)}
+              className="pixel-button bg-blue-600 hover:bg-blue-500 relative flex items-center gap-2 text-[10px] sm:text-xs pixel-border-32"
+            >
+              <MessageCircle size={14} /> CHAT
+              {chatMessages.length > 0 && !chatOpen && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold border-2 border-white">
+                  {chatMessages.length}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -721,7 +928,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       </div>
 
       {/* The Table */}
-      <div className="relative w-[95%] max-w-4xl aspect-[16/9] perspective-table flex items-center justify-center pixel-shadow">
+      <div className={cn(
+        "relative w-[95%] max-w-4xl aspect-[16/9] flex items-center justify-center pixel-shadow",
+        isChessboard ? "chessboard-table" : "perspective-table"
+      )}>
         {/* Game Area on Table */}
         <div className="relative w-full h-full flex items-center justify-center gap-16 sm:gap-24">
           {/* Draw Pile */}
@@ -735,6 +945,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
                 isBack 
                 onClick={() => gameState?.status === 'PLAYING' && drawCard(0)} 
                 disabled={gameState?.currentPlayerIndex !== 0}
+                className={cn(isBurning && "animate-pulse brightness-125 shadow-[0_0_20px_rgba(239,68,68,0.8)]")}
               />
             </div>
           </div>
@@ -752,7 +963,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
                         animate={{ scale: 1, opacity: 1, y: 0, rotate: 0 }}
                         transition={{ type: 'spring', damping: 15 }}
                       >
-                        <Card card={card} disabled />
+                        <Card 
+                          card={card} 
+                          disabled 
+                          className={cn(isBurning && "animate-pulse brightness-125 shadow-[0_0_20px_rgba(239,68,68,0.8)]")}
+                        />
                       </motion.div>
                     )
                   ))}
@@ -776,9 +991,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
                     {gameState.currentColor}
                   </motion.div>
                 )}
-                <div className="text-white font-black italic text-sm sm:text-xl pixel-text tracking-tighter whitespace-nowrap">
-                  DISCARD
-                </div>
               </div>
             </div>
           </div>
@@ -805,7 +1017,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
                     "transform",
                     idx === 0 ? "rotate-180" : idx === 1 ? "-rotate-90" : "rotate-90"
                   )}>
-                    <Card isBack className="w-10 h-14 sm:w-14 sm:h-20 pixel-shadow" />
+                    <Card isBack className={cn("w-10 h-14 sm:w-14 sm:h-20 pixel-shadow", isBurning && "animate-pulse brightness-125 shadow-[0_0_15px_rgba(239,68,68,0.8)]")} />
                   </div>
                 ))}
                 {player.hand.length > 5 && (
@@ -864,6 +1076,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
                 card={card} 
                 onClick={() => playCard(0, card)}
                 disabled={gameState?.currentPlayerIndex !== 0}
+                className={cn(isBurning && "animate-pulse brightness-125 shadow-[0_0_20px_rgba(239,68,68,0.8)]")}
               />
             </div>
           ))}
@@ -893,6 +1106,81 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
            chosenColor={showDramaticAction.chosenColor}
          />
        )}
+
+      {/* Chat Window */}
+      <AnimatePresence>
+        {chatOpen && mode === 'MULTIPLAYER' && (
+          <motion.div
+            initial={{ x: 300, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 300, opacity: 0 }}
+            className="fixed top-20 right-4 w-72 sm:w-80 h-[400px] bg-zinc-900/95 pixel-border-32 z-[60] flex flex-col overflow-hidden"
+          >
+            {/* Chat Header */}
+            <div className="p-3 bg-zinc-800 border-b-4 border-black/40 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <MessageCircle size={16} className="text-blue-400" />
+                <span className="text-white font-black text-[10px] sm:text-xs pixel-text uppercase">Game Chat</span>
+              </div>
+              <button onClick={() => setChatOpen(false)} className="text-zinc-400 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Messages List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
+              {chatMessages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-zinc-600 gap-2">
+                  <MessageCircle size={32} opacity={0.2} />
+                  <p className="text-[8px] sm:text-[10px] uppercase font-black">No messages yet</p>
+                </div>
+              ) : (
+                chatMessages.map((msg, idx) => (
+                  <div 
+                    key={`${msg.timestamp}-${idx}`}
+                    className={cn(
+                      "flex flex-col max-w-[85%]",
+                      msg.senderId === socketRef.current?.id ? "ml-auto items-end" : "items-start"
+                    )}
+                  >
+                    <span className="text-[8px] text-zinc-500 font-bold mb-1 px-1">
+                      {msg.senderId === socketRef.current?.id ? "YOU" : msg.senderName}
+                    </span>
+                    <div className={cn(
+                      "px-3 py-2 pixel-border-sm text-[10px] sm:text-xs break-words",
+                      msg.senderId === socketRef.current?.id 
+                        ? "bg-blue-600 text-white" 
+                        : "bg-zinc-700 text-white"
+                    )}>
+                      {msg.message}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="p-3 bg-zinc-800 border-t-4 border-black/40 flex gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                placeholder="Type a message..."
+                className="flex-1 bg-black/40 border-none outline-none text-white px-3 py-2 text-[10px] sm:text-xs pixel-border-sm placeholder:text-zinc-600"
+              />
+              <button 
+                onClick={sendChatMessage}
+                disabled={!newMessage.trim()}
+                className="p-2 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-700 disabled:opacity-50 transition-colors pixel-border-sm"
+              >
+                <Send size={14} className="text-white" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Wild Color Selection */}
       <AnimatePresence>
@@ -967,16 +1255,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({ mode, difficulty, partyCod
       )}
 
       {/* UNO Button */}
-      {gameState?.players[0].hand.length === 2 && gameState.currentPlayerIndex === 0 && (
+      {gameState?.players[0].hand.length <= 2 && gameState?.players[0].hand.length > 0 && 
+       gameState.currentPlayerIndex === 0 && !gameState.players[0].saidUno && (
         <motion.button
           initial={{ scale: 0, x: 100 }}
           animate={{ scale: 1, x: 0 }}
           onClick={sayUno}
-          disabled={hasSaidUno}
-          className={cn(
-            "absolute bottom-40 right-4 sm:right-10 z-[60] w-20 h-20 sm:w-28 sm:h-28 rounded-full pixel-border flex items-center justify-center font-black italic text-xl sm:text-3xl transition-transform hover:scale-110 active:scale-95",
-            hasSaidUno ? "bg-zinc-600 text-zinc-400 grayscale" : "bg-red-600 text-white animate-pulse"
-          )}
+          className="absolute bottom-40 right-4 sm:right-10 z-[60] w-20 h-20 sm:w-28 sm:h-28 rounded-full pixel-border flex items-center justify-center font-black italic text-xl sm:text-3xl transition-transform hover:scale-110 active:scale-95 bg-red-600 text-white animate-pulse"
         >
           UNO!
         </motion.button>
